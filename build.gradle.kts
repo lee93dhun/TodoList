@@ -27,6 +27,13 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	// https://mvnrepository.com/artifact/com.google.guava/guava
 	implementation("com.google.guava:guava:11.0.2")
+	// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt
+	implementation("io.jsonwebtoken:jjwt:0.9.1")
+	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security
+	implementation("org.springframework.boot:spring-boot-starter-security")
+
+	//  NoClassDefFoundError :javax/xml/bind/DatatypeConverter 발생으로 추가 한 dependencie
+	implementation("javax.xml.bind:jaxb-api:2.3.1")
 
 
 
