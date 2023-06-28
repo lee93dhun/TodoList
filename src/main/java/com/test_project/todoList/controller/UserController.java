@@ -8,6 +8,8 @@ import com.test_project.todoList.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +26,9 @@ public class UserController {
     @Autowired
     private TokenProvider tokenProvider;
 
+    // bean 으로 작성 해도 됨
+    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody UserDTO userDTO) {
         try {
@@ -31,7 +36,7 @@ public class UserController {
             UserEntity user = UserEntity.builder()
                     .email(userDTO.getEmail())
                     .username(userDTO.getUsername())
-                    .password(userDTO.getPassword())
+                    .password(passwordEncoder.encode(userDTO.getPassword()))
                     .build();
             // 서비스를 이용해 리포지토리에 사용자 저장
             UserEntity registeredUser = userService.create(user);
@@ -40,9 +45,11 @@ public class UserController {
                     .id(registeredUser.getId())
                     .username(registeredUser.getUsername())
                     .build();
-            return ResponseEntity.ok().body(responseUserDTO);
-        } catch (Exception e) {
             // 사용자 정보는 항상 하나 이므로 리스트로 만들어야 하는 ResponseDTO 를 사용 하지 않고 UserDTO 리턴
+            return ResponseEntity.ok().body(responseUserDTO);
+
+        } catch (Exception e) {
+            // 예외가 나는 경우 bad 리스폰스 리턴
             ResponseDTO responseDTO = ResponseDTO.builder().error(e.getMessage()).build();
             return ResponseEntity
                     .badRequest()
@@ -54,10 +61,10 @@ public class UserController {
 
     @PostMapping("/signin")
     public ResponseEntity<?> authenticate (@RequestBody UserDTO userDTO){
-        UserEntity user = userService.getByCredentials(userDTO.getEmail(), userDTO.getPassword());
-        System.out.println("1");
+
+        UserEntity user = userService.getByCredentials(userDTO.getEmail(), userDTO.getPassword(), passwordEncoder);
+
         if (user != null) {
-            System.out.println("2");
             // 토큰 생성
             final String token = tokenProvider.create(user);
             final UserDTO responseUserDTO = UserDTO.builder()
@@ -65,7 +72,7 @@ public class UserController {
                     .id(user.getId())
                     .token(token)
                     .build();
-            System.out.println("3");
+
             return ResponseEntity.ok().body(responseUserDTO);
         }else {
             ResponseDTO responseDTO = ResponseDTO.builder()
